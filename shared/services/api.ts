@@ -1,5 +1,5 @@
 import { API_CONF } from "~shared/utils/constants"
-import { EmailsFromSpreadsheet } from "~shared/types";
+import type { EmailsFromSpreadsheet } from "~shared/types";
 
 class ApiService {
     private baseUrl = API_CONF.BASE_URL

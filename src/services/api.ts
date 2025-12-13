@@ -1,5 +1,5 @@
-import { API_CONF } from "~shared/utils/constants"
-import type { EmailsFromSpreadsheet, EmailData } from "~shared/types";
+import { API_CONF } from "~src/utils/constants"
+import type { EmailsFromSpreadsheet, EmailData } from "~src/types";
 
 class ApiService {
     private baseUrl = API_CONF.BASE_URL
@@ -95,6 +95,20 @@ class ApiService {
         )
 
         return data.message
+    }
+
+    async fetchAttachment(
+        gmailUrl: string,
+    ): Promise<Blob> {
+        const response = await fetch(`${gmailUrl}`, {
+            credentials: 'include',
+        })
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch attachment")
+        }
+
+        return await response.blob()
     }
 }
 

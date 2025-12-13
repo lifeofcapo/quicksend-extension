@@ -1,6 +1,6 @@
-import { useAuth } from "~shared/hooks/useAuth"
+import { useAuth } from "~src/hooks/useAuth"
 import ReactComponent from "react:~assets/profile_icon.svg"
-import { API_CONF } from "~shared/utils/constants";
+import { API_CONF } from "~src/utils/constants";
 import React from "react";
 
 interface ProfileButtonProps {

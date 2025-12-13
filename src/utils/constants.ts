@@ -13,7 +13,9 @@ export const API_CONF = {
 
 export const GMAIL_SELECTORS = {
     COMPOSE_BUTTON: '.T-I.T-I-KE.L3',
-    COMPOSE_WINDOW: '.AD',
+    COMPOSE_WINDOW: '.aSt,.AD',
     RECIPIENT_FIELD: '.agP.aFw',
-    TOOLBAR: '.gU.Up'
+    TOOLBAR: '.gU.Up',
+    ATTACHMENT_NODES: 'dL',
+    RECIPIENTS_NODES: '.afV',
 } as const

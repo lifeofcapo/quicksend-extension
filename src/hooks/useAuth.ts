@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { storageService } from "~shared/services/storage"
+import { storageService } from "~src/services/storage"
 
 export const useAuth = () => {
   const [token, setToken] = useState<string | null>(null)

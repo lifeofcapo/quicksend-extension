@@ -1,5 +1,5 @@
 import { SecureStorage } from "@plasmohq/storage/secure";
-import type { TokenData, ImportEmailsSession } from "~shared/types";
+import type { TokenData, ImportEmailsSession } from "~src/types";
 
 class SecureStorageService {
     private storage = new SecureStorage();
@@ -16,10 +16,10 @@ class SecureStorageService {
         return this.storage.set('importEmailsSession', importEmailsSession);
     }
 
-    async getImportEmailsSession(id: string): Promise<ImportEmailsSession | null> {
+    async getImportEmailsSessionById(id: string): Promise<ImportEmailsSession | null> {
         const sessions = await this.getImportEmailsSessions()
 
-        return sessions['id'] || null
+        return sessions.find(session => session.id === id) || null
     }
 
     private async getImportEmailsSessions(): Promise<ImportEmailsSession[]> {
@@ -30,7 +30,7 @@ class SecureStorageService {
         return (await this.storage.set('timezone', timezone));
     }
 
-    async getTimezone(timezone: string): Promise<string | null> {
+    async getTimezone(): Promise<string | null> {
         return (await this.storage.get('timezone') as string)
     }
 }

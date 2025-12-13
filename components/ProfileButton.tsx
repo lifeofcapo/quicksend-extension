@@ -1,24 +1,38 @@
-import {useState} from "react";
+import { useAuth } from "~shared/hooks/useAuth"
+import ReactComponent from "react:~assets/profile_icon.svg"
+import { API_CONF } from "~shared/utils/constants";
+import React from "react";
 
-interface QuickSendButtonProps {
+interface ProfileButtonProps {
     onClick: () => Promise<void>;
 }
 
-function addProfileButton() {
-    
+export function ProfileButton({onClick}: ProfileButtonProps) {
+  const { token, loading } = useAuth()
 
-    const button = createButton('profile-button', 'profile', 'Go to your profile');
-    // Добавляем обработчик события 'click', который будет перенаправлять на сайт
-    button.addEventListener('click', async function() {
-        const result_token = await chrome.storage.local.get(['accessToken']);
-        const token = result_token.accessToken;
-        console.log("Токен после удаления, ", token);
-        if (!token) {
-            window.open('http://127.0.0.1:8000/api/v1/login', '_blank');
+  const handleClick = async () => {
+    if (loading) {
+      return
+    }
 
-        } else {
-            window.open('http://127.0.0.1:8000/profile', '_blank');
-        }
-    });
-    addButtonToPage(button);
+    const redirectUrl = token
+      ? `${API_CONF.BASE_URL}/${API_CONF.ENDPOINTS.PROFILE}`
+      : `${API_CONF.BASE_URL}/${API_CONF.ENDPOINTS.LOGIN}`
+
+    window.open(redirectUrl, "_blank")
+  }
+
+  return (
+    <button
+      className="profile-button"
+      onClick={handleClick}
+      disabled={loading}
+      title={loading ? "Loading..." : token ? "Go to your profile" : "Login"}
+    >
+      <ReactComponent
+        width={24}
+        height={24}
+      />
+    </button>
+  )
 }

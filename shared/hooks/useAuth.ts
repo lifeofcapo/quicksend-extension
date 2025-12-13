@@ -31,5 +31,5 @@ export const useAuth = () => {
     })
   }, [])
 
-  return { token, setToken, refreshToken }
+  return { token, loading, setToken, refreshToken }
 }

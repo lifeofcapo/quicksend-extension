@@ -83,7 +83,7 @@ class ApiService {
             formData.append("files", file.blob, file.filename)
         }
 
-        formData.append("body", JSON.stringify(formData))
+        formData.append("body", JSON.stringify(emailData))
 
         const data = await this.request<{ message: string }>(
             API_CONF.API_ENDPOINTS.START_CAMPAIGN,

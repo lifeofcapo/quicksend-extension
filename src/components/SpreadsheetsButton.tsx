@@ -3,13 +3,9 @@ import TableIcon from "react:~assets/list_icon.svg"
 import React from "react";
 import { apiService } from "~src/services/api";
 
-interface SpreadsheetsButtonProps {
-  onClick?: () => Promise<void>;
-}
-
-export function SpreadsheetsButton({onClick}: SpreadsheetsButtonProps) {
+export function SpreadsheetsButton() {
   const { token, loading } = useAuth()
-  const [hasAccess, setHasAccess] = React.useState(false);
+  const [hasAccess, setHasAccess] = React.useState(true);
 
   React.useEffect(() => {
     const checkAccess = async () => {
@@ -35,10 +31,14 @@ export function SpreadsheetsButton({onClick}: SpreadsheetsButtonProps) {
     return null
   }
 
-  const handleClick = async () => {
-    if (onClick) {
-      await onClick()
-    }
+  const handleClick = () => {
+    window.postMessage(
+      {
+        source: "quicksend",
+        type: "OPEN_SHEETS_MODAL"
+      },
+      "*"
+    )
   }
 
   return (

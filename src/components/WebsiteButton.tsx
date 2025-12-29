@@ -11,7 +11,6 @@ export function WebsiteButton({ onClick }: WebsiteButtonProps) {
         if (onClick) {
             await onClick()
         }
-
         window.open(API_CONF.WEBSITE_URL, "_blank")
     }
 

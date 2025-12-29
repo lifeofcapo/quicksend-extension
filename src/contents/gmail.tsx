@@ -1,5 +1,5 @@
 import type { PlasmoCSConfig, PlasmoGetInlineAnchorList } from "plasmo";
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react"
 
 import { QuickSendButton } from "~src/components/QuickSendButton"
 import { waitForElement } from "~src/utils/helpers";
@@ -9,17 +9,18 @@ import { gmailService } from "~src/services/gmail";
 import { storageService } from "~src/services/storage";
 import { findParentComposeWindow } from "~src/utils/helpers";
 
+import { CampaignDropdown } from "~src/components/CampaignDropdown"
+import { SheetsModalWindow } from "~src/components/SheetsModalWindow"
+import { subscribe } from "~src/contents/message-bus"
+
 export const config: PlasmoCSConfig = {
     matches: ["https://mail.google.com/*"],
     all_frames: true,
 }
 
-export const getInlineAnchorList: PlasmoGetInlineAnchorList = async () => {
-    console.log('get inline anchor list')
-
-    await waitForElement(GMAIL_SELECTORS.COMPOSE_WINDOW)
-
-    const anchors: HTMLElement[] = []
+export const getInlineAnchorList: PlasmoGetInlineAnchorList = async () => { 
+    //убрал временно wairforelement функцию
+    const anchors: Element[] = []
 
     const composeWindows = document.querySelectorAll(GMAIL_SELECTORS.COMPOSE_WINDOW)
 
@@ -27,16 +28,44 @@ export const getInlineAnchorList: PlasmoGetInlineAnchorList = async () => {
         const sendButton = window.querySelector(GMAIL_SELECTORS.SEND_BUTTON)
 
         if (sendButton) {
-            anchors.push(sendButton.parentElement as HTMLElement)
+            const anchor = sendButton.closest('.gU.Up')
+            if (anchor) {
+                anchors.push(anchor)
+            }
         }
     })
-
-    console.log(`[QuickSend] Found ${anchors.length} compose windows`)
-    return anchors
+    
+    return anchors.map(element => ({
+        element,
+        insertPosition: "afterend" as const
+    }))
 }
 
 export default function QuickSendInline() {
+    const [showCampaign, setShowCampaign] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null);
+    const [showSheets, setShowSheets] = useState(false)
+
+    useEffect(() => {
+    subscribe((type) => {
+        if (type === "OPEN_SHEETS_MODAL") {
+        setShowSheets(true)
+        }
+    })
+    }, [])
+useEffect(() => {
+  const handler = (event: MessageEvent) => {
+    if (event.source !== window) return
+    if (event.data?.source !== "quicksend") return
+
+    if (event.data.type === "OPEN_SHEETS_MODAL") {
+      setShowSheets(true)
+    }
+  }
+
+  window.addEventListener("message", handler)
+  return () => window.removeEventListener("message", handler)
+}, [])
 
     const handleClick = async () => {
         if (!containerRef.current) return
@@ -66,5 +95,23 @@ export default function QuickSendInline() {
         await apiService.startCampaign(token, emailData, files)
     }
 
-    return <QuickSendButton />
+return (
+  <div
+    ref={containerRef}
+    className="relative flex items-center gap-2"
+  >
+    <QuickSendButton onClick={handleClick} />
+
+    <button
+      className="custom-sendL-button"
+      onClick={() => setShowCampaign(v => !v)}
+      title="Schedule campaign"
+    >
+      Schedule
+    </button>
+
+    <CampaignDropdown isVisible={showCampaign} />
+  </div>
+)
+
 }

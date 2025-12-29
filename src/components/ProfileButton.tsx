@@ -27,7 +27,7 @@ export function ProfileButton({onClick}: ProfileButtonProps) {
       className="profile-button"
       onClick={handleClick}
       disabled={loading}
-      title={loading ? "Loading..." : token ? "Go to your profile" : "Login"}
+      title={loading ? "Loading..." : token ? "My profile" : "Login"}
     >
       <ProfileIcon />
     </button>

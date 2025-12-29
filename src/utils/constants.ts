@@ -1,9 +1,11 @@
+import { API_URL, WEBSITE_URL } from "~plasmo.env"
+
 export const API_CONF = {
-    WEBSITE_URL: process.env.WEBSITE_URL,
+    WEBSITE_URL: WEBSITE_URL,
     WEBSITE_ENDPOINTS: {
         PROFILE: '/profile'
     },
-    API_URL: process.env.API_URL,
+    API_URL: API_URL,
     API_ENDPOINTS: {
         REFRESH_TOKEN: '/api/v1/jwt/token/refresh',
         GET_GOOGLE_TOKEN: '/api/v1/google/token',

@@ -1,82 +1,136 @@
-import React from "react";
-import { useState } from "react";
-
-import GmailIcon from "react:~assets/gmail.svg";
-import SheetsIcon from "react:~assets/googlesheets.svg";
+import React, { useState } from "react"
+import { createPortal } from "react-dom"
 
 interface SheetsModalWindowProps {
-    onSubmit: (spreadsheetId: string, range: string) => void;
-    onClose?: () => void;
+  onSubmit: (spreadsheetId: string, range: string) => Promise<void>
+  onClose?: () => void
 }
 
 export const SheetsModalWindow = ({
-    onSubmit,
-    onClose
+  onSubmit,
+  onClose
 }: SheetsModalWindowProps) => {
-    const [spreadsheetId, setSpreadsheetId] = useState("");
-    const [range, setRange] = useState("A2:A10");
-    const [sheetName, setSheetName] = useState("Sheet1");
+  const [spreadsheetId, setSpreadsheetId] = useState("")
+  const [sheetName, setSheetName] = useState("Sheet1")
+  const [range, setRange] = useState("A2:A10")
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const fullRange = `'${sheetName}'!${range}`
-        onSubmit(spreadsheetId.trim(), fullRange);
-    }
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const fullRange = `'${sheetName}'!${range}`
+    await onSubmit(spreadsheetId.trim(), fullRange)
+  }
+  console.log("🟢SheetsModalWindow rendering")
 
-    return (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-            <div className="modal-container">
-                <div className="modal-logo-container">
-                    <GmailIcon className="modal-logo" width={26} height={26} />
-                    <SheetsIcon className="modal-logo" width={26} height={26} />
-                </div>
+  const modalContent = (
+    <div
+      className="modal-overlay"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 999999
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose?.()
+        }
+      }}
+    >
+      <div 
+        className="modal-container"
+        style={{
+          backgroundColor: "white",
+          padding: "40px",
+          borderRadius: "16px",
+          maxWidth: "500px",
+          width: "90%"
+        }}
+      >
+        <h3 style={{ marginBottom: "20px", fontSize: "24px" }}>
+          Enter Google Sheets Details
+        </h3>
 
-                <h3 className="modal-title">
-                    Enter Google Sheets Details
-                </h3>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+          <input
+            type="text"
+            placeholder="Enter Spreadsheet ID"
+            value={spreadsheetId}
+            onChange={(e) => setSpreadsheetId(e.target.value)}
+            required
+            style={{
+              padding: "12px",
+              border: "2px solid #e5e7eb",
+              borderRadius: "8px",
+              fontSize: "16px"
+            }}
+          />
 
-                <form onSubmit={handleSubmit} className="modal-form">
-                    <input
-                        type="text"
-                        placeholder="Enter Spreadsheet ID"
-                        value={sheetName}
-                        onChange={(e) => setSpreadsheetId(e.target.value)}
-                        required
-                        className="modal-input"
-                    />
+          <div style={{ display: "flex", gap: "12px" }}>
+            <input
+              type="text"
+              placeholder="Sheet name (e.g., Sheet1)"
+              value={sheetName}
+              onChange={(e) => setSheetName(e.target.value)}
+              required
+              style={{
+                padding: "12px",
+                border: "2px solid #e5e7eb",
+                borderRadius: "8px",
+                fontSize: "16px",
+                flex: 1
+              }}
+            />
 
-                    <div className="modal-input-row">
-                        <input
-                            type="text"
-                            placeholder="Sheet name (e.g., Sheet1)"
-                            value={sheetName}
-                            onChange={(e) => setSheetName(e.target.value)}
-                            required
-                            className="modal-input flex-1"
-                        />
+            <input
+              type="text"
+              placeholder="Range (e.g., A2:A10)"
+              value={range}
+              onChange={(e) => setRange(e.target.value)}
+              required
+              style={{
+                padding: "12px",
+                border: "2px solid #e5e7eb",
+                borderRadius: "8px",
+                fontSize: "16px",
+                flex: 1
+              }}
+            />
+          </div>
 
-                        <input
-                            type="text"
-                            placeholder="Range (e.g., A2:A10)"
-                            value={range}
-                            onChange={(e) => setRange(e.target.value)}
-                            required
-                            className="modal-input flex-1"
-                        />
-                    </div>
+          <button 
+            type="submit"
+            style={{
+              padding: "12px 24px",
+              backgroundColor: "#2563eb",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "16px",
+              cursor: "pointer",
+              fontWeight: "500"
+            }}
+          >
+            Submit
+          </button>
 
-                    <button type="submit" className="modal-button">
-                        Submit
-                    </button>
+          <p style={{ fontSize: "14px", color: "#6b7280", marginTop: "8px" }}>
+            ** A spreadsheet ID can be extracted from its URL. For example, the
+            spreadsheet ID in the URL
+            https://docs.google.com/spreadsheets/d/abc1234567/edit#gid=0 is
+            <br />
+            <strong>abc1234567</strong>.
+          </p>
+        </form>
+      </div>
+    </div>
+  )
 
-                    <p className="modal-help-text">
-                        ** A spreadsheet ID can be extracted from its URL. For example, the
-                        spreadsheet ID in the URL
-                        https://docs.google.com/spreadsheets/d/abc1234567/edit#gid=0 is
-                        'abc1234567'.
-                    </p>
-                </form>
-            </div>
-        </div>
-    )
+  // рендер в document.body обязательно
+  return createPortal(modalContent, document.body)
 }

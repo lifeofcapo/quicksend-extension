@@ -69,10 +69,13 @@ class GmailService {
             timezone: ""
         }
 
-        const recipientNodes = workingWindow.getElementsByClassName(GMAIL_SELECTORS.RECIPIENTS_NODES)
-        emailData.recipients = Array.from(recipientNodes).map(
-            (node) => node.getAttribute("data-hovercard-id") || ""
+        const recipientNodes = workingWindow.querySelectorAll(
+            'div[role="option"][data-hovercard-id]'
         )
+
+        emailData.recipients = Array.from(recipientNodes)
+            .map((node) => node.getAttribute("data-hovercard-id") || "")
+            .filter(email => email.includes('@'))
 
         for (const [index, rep] of emailData.recipients.entries()) {
             if (
@@ -80,8 +83,11 @@ class GmailService {
                 rep.includes("recipients") &&
                 rep.includes("quicksend")
             ) {
-                const uniqueId = rep.split("id_")[1].split("@")[0]
-                const data = await storageService.getImportEmailsSessionById(uniqueId)
+                const uniqueId = rep.split("id_")[1]?.split("@")[0]
+
+                if (!uniqueId) continue
+
+                const data = await storageService.getParsedEmailsById(uniqueId)
 
                 if (data?.emails) {
                     emailData.recipients.splice(index, 1)
@@ -92,13 +98,13 @@ class GmailService {
 
         const subjectField = workingWindow.querySelector(
             'input[name="subject"]'
-        ) as HTMLInputElement;
-        emailData.subject = subjectField ? subjectField.value : ""
+        ) as HTMLInputElement
+        emailData.subject = subjectField?.value || ""
 
         const messageBody = workingWindow.querySelector(
             'div[role="textbox"][contenteditable="true"]'
-        ) as HTMLInputElement;
-        emailData.body = messageBody ? messageBody.innerHTML : ""
+        ) as HTMLInputElement
+        emailData.body = messageBody?.innerHTML || ""
 
         const date = workingWindow.querySelector(
             "#campaign-date"

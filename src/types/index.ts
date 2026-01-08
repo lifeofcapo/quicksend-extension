@@ -4,24 +4,10 @@ export interface AttachmentData {
     filesize: string
 }
 
-export interface EmailsFromSpreadsheet {
-    spreadsheetId: string
-    spreadsheetName: string
-    emails: string[]
-    totalCount: number
-}
-
-export interface TokenData {
-    accessToken: string
-    expiresAt?: number
-    lastRefreshed: number
-}
-
-export interface ImportEmailsSession {
+export interface ParsedEmails {
     id: string
-    sheetName: string
+    spreadsheetId: string
     emails: string[]
-    timestamp: number
 }
 
 export interface SubscriptionData {

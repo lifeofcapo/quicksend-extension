@@ -1,6 +1,6 @@
 import { API_CONF } from "~src/utils/constants"
 import { storageService } from "~src/services/storage"
-import type { EmailData, EmailsFromSpreadsheet, SubscriptionData } from "~src/types"
+import type { EmailData, SubscriptionData } from "~src/types"
 
 class AuthManager {
     private baseUrl = API_CONF.API_URL
@@ -9,7 +9,7 @@ class AuthManager {
 
     async login(interactive: boolean = true): Promise<string> {
         return new Promise((resolve, reject) => {
-            const authUrl = `${this.baseUrl}${this.apiEndpoints.LOGIN}?redirect_to=extension&lang=en`
+            const authUrl = this.baseUrl + this.apiEndpoints.LOGIN
 
             console.log('[🔵 Quicksend] Starting OAuth flow:', authUrl)
 
@@ -19,6 +19,8 @@ class AuthManager {
                     interactive: interactive
                 },
                 async (redirectUrl) => {
+                    console.log('[🔵 Quicksend] RAW redirectUrl:', redirectUrl)
+
                     if (chrome.runtime.lastError) {
                         console.error('[🔵 Quicksend] OAuth error:', chrome.runtime.lastError.message)
                         reject(chrome.runtime.lastError)
@@ -30,12 +32,12 @@ class AuthManager {
                         return
                     }
 
-                    console.log('[🔵 Quicksend] Got redirect URL:', redirectUrl)
+                    console.log('[🔵 Quicksend] Got edirect URL:', redirectUrl)
 
                     try {
                         const url = new URL(redirectUrl)
-                        const accessToken = url.searchParams.get("access_token")
-                        const refreshToken = url.searchParams.get("refresh_token")
+                        const accessToken = url.searchParams.get("access_jwt_token")
+                        const refreshToken = url.searchParams.get("refresh_jwt_token")
 
                         if (!accessToken || !refreshToken) {
                             console.error('[🔵 Quicksend] No tokens in redirect URL')
@@ -45,6 +47,8 @@ class AuthManager {
 
                         await this.storageService.setAccessToken(accessToken)
                         await this.storageService.setRefreshToken(refreshToken)
+
+                        console.log(`Tokens: ${accessToken} ${refreshToken}`)
 
                         console.log('[🔵 Quicksend] Quicksend: Logged in successfully')
                         resolve(accessToken)
@@ -78,9 +82,11 @@ class AuthManager {
             }
 
             const data = await response.json()
-            const newAccessToken = data.access_token
+            const newAccessToken = data.access_jwt_token
+            const newRefreshToken = data.refresh_jwt_token
 
             await this.storageService.setAccessToken(newAccessToken)
+            await this.storageService.setRefreshToken(newRefreshToken)
 
             console.log('[🔵 Quicksend] Token refreshed')
 
@@ -93,6 +99,8 @@ class AuthManager {
 
     async apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
         const accessToken = await this.storageService.getAccessToken()
+
+        console.log()
 
         if (!accessToken) {
             throw new Error('No access token')
@@ -122,7 +130,7 @@ class AuthManager {
                     }
                 })
             } catch (refreshTokenError) {
-                console.log('⚠️ Refresh failed, need re-login')
+                console.log('[🔵 Quicksend] Refresh failed, need re-login')
 
                 await this.login(true)
 
@@ -149,8 +157,8 @@ class AuthManager {
     async getEmailsFromSpreadsheet(
         spreadsheetId: string,
         range: string
-    ): Promise<EmailsFromSpreadsheet> {
-        return await this.apiRequest<EmailsFromSpreadsheet>(
+    ): Promise<Array<string>> {
+        return await this.apiRequest<Array<string>>(
             API_CONF.API_ENDPOINTS.PARSE_EMAILS_FROM_SPREADSHEET,
             {
                 method: 'POST',
@@ -185,12 +193,12 @@ class AuthManager {
         })
 
         if (response.status === 401) {
-            const newToken = await this.refreshToken()
+            const newAccessToken = await this.refreshToken()
 
             response = await fetch(this.baseUrl + API_CONF.API_ENDPOINTS.START_CAMPAIGN, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${newToken}`,
+                    'Authorization': `Bearer ${newAccessToken}`,
                 },
                 body: formData
             })
@@ -260,13 +268,13 @@ chrome.webNavigation.onCompleted.addListener(
     async (details) => {
         if (details.frameId !== 0) return
 
-        console.log('📧 Gmail opened')
+        console.log('[🔵 Quicksend] Gmail opened')
 
         const accessToken = await storageService.getAccessToken()
         const refreshToken = await storageService.getRefreshToken()
 
         if (!accessToken || !refreshToken) {
-            console.log('⚠️ No tokens, starting login...')
+            console.log('[🔵 Quicksend] No tokens, starting login...')
 
             try {
                 await authManager.login(true)
@@ -274,7 +282,7 @@ chrome.webNavigation.onCompleted.addListener(
                 chrome.tabs.sendMessage(details.tabId, {
                     type: 'AUTH_SUCCESS',
                 }).catch(() => {
-                    console.log('Content script not ready yet')
+                    console.log('[🔵 Quicksend] Content script not ready yet')
                 })
             } catch (error) {
                 console.error('[🔵 Quicksend] Login failed:', error.error)

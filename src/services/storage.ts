@@ -1,37 +1,51 @@
-import { SecureStorage } from "@plasmohq/storage/secure";
-import type { TokenData, ImportEmailsSession } from "~src/types";
+import { SecureStorage } from "@plasmohq/storage/secure"
+import type { ParsedEmails } from "~src/types"
 
 class SecureStorageService {
-    private storage = new SecureStorage();
+    private storage = new SecureStorage()
+    private initialized = false
 
-    async setImportEmailsSession(importEmailsSession: ImportEmailsSession): Promise<void> {
-        return this.storage.set('importEmailsSession', importEmailsSession);
+    private async init() {
+        if (this.initialized) return
+
+        await this.storage.setPassword(chrome.runtime.id)
+        this.initialized = true
     }
 
-    async getImportEmailsSessionById(id: string): Promise<ImportEmailsSession | null> {
-        const sessions = await this.getImportEmailsSessions()
+    async setParsedEmails(parsedEmails: ParsedEmails): Promise<void> {
+        await this.init()
 
-        return sessions.find(session => session.id === id) || null
+        await this.storage.set('parsed_emails', parsedEmails);
     }
 
-    private async getImportEmailsSessions(): Promise<ImportEmailsSession[]> {
-        return (await this.storage.get('importEmailsSessions') as ImportEmailsSession[])
+    async getParsedEmailsById(id: string): Promise<ParsedEmails | null> {
+        const allParsedEmails = await this.storage.get('parsed_emails') as ParsedEmails[]
+
+        return allParsedEmails.find(concreteParsedEmails => concreteParsedEmails.id === id) || null
     }
 
     async setAccessToken(accessToken: string): Promise<void> {
+        await this.init()
+
         await this.storage.set('access_jwt_token', accessToken);
     }
 
     async getAccessToken(): Promise<string | null> {
-        return (await this.storage.get('access_token') as string)
+        await this.init()
+
+        return (await this.storage.get('access_jwt_token') as string)
     }
 
     async setRefreshToken(refreshToken: string): Promise<void> {
-        await this.storage.set('refresh_token', refreshToken);
+        await this.init()
+
+        await this.storage.set('refresh_jwt_token', refreshToken);
     }
 
     async getRefreshToken(): Promise<string | null> {
-        return (await this.storage.get('refresh_token') as string)
+        await this.init()
+
+        return (await this.storage.get('refresh_jwt_token') as string)
     }
 }
 

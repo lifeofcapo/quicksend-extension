@@ -26,6 +26,7 @@ export const getInlineAnchorList: PlasmoGetInlineAnchorList = async () => {
         if (sendButton) {
             const anchor = sendButton.closest('.gU.Up')
             if (anchor) {
+                anchor.setAttribute('data-quicksend-compose-id', window.getAttribute('data-compose-id') || '')
                 anchors.push(anchor)
             }
         }
@@ -68,10 +69,33 @@ export default function QuickSendInline() {
     const handleClick = async () => {
         if (!containerRef.current) return
 
-        const composeWindow = findParentComposeWindow(containerRef.current)
+        let composeWindow = await findParentComposeWindow(containerRef.current)
+
+        if (!composeWindow) {
+            const allComposeWindows = document.querySelectorAll('.AD, .M9')
+
+            for (const window of allComposeWindows) {
+                if (window.contains(containerRef.current)) {
+                    composeWindow = window as HTMLElement
+                    break
+                }
+            }
+        }
+
+        if (!composeWindow) {
+            const composeId = containerRef.current.closest('.gU.Up')?.getAttribute('data-quicksend-compose-id')
+
+            if (composeId) {
+                composeWindow = document.querySelector(`[data-compose-id="${composeId}"]`)
+            }
+        }
 
         if (!composeWindow) {
             console.error("[Quicksend] Compose window not found!")
+            console.log("[Quicksend] Container:", containerRef.current)
+            console.log("[Quicksend] All compose windows:", document.querySelectorAll('.AD, .M9'))
+            toast.error("Cannot find compose window. Please try again.")
+
             return
         }
 

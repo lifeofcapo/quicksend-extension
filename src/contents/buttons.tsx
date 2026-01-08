@@ -7,6 +7,8 @@ import { SpreadsheetsButton } from "~src/components/SpreadsheetsButton";
 import { WebsiteButton } from "~src/components/WebsiteButton";
 import { SheetsModalWindow } from "~src/components/SheetsModalWindow";
 import { gmailService } from "~src/services/gmail";
+import { storageService } from "~src/services/storage";
+import { generateShortId } from "~src/utils/helpers";
 
 export const config: PlasmoCSConfig = {
     matches: ["https://mail.google.com/*"],
@@ -80,11 +82,19 @@ export default function GmailButtons() {
                 return
             }
 
+            const generatedId = await generateShortId();
+
             await gmailService.addEmailChip(
-                response.data.spreadsheetId,
-                response.data.totalCount,
+                generatedId,
+                response.data.emails.length,
                 composeWindow
             )
+
+            await storageService.setParsedEmails({
+                id: generatedId,
+                spreadsheetId: spreadsheetId,
+                emails: response.data.emails,
+            })
 
             setShowSheets(false)
         } catch (error) {

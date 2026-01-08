@@ -16,7 +16,7 @@ export const SheetsModalWindow = ({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const fullRange = `'${sheetName}'!${range}`
+    const fullRange = `${sheetName}!${range}`
     await onSubmit(spreadsheetId.trim(), fullRange)
   }
 

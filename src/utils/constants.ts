@@ -2,9 +2,9 @@ export const API_CONF = {
     WEBSITE_URL: 'https://quicksend.vercel.app',
     API_URL: 'http://localhost',
     API_ENDPOINTS: {
-        REFRESH_TOKEN: '/api/auth/jwt/refresh',
+        REFRESH_TOKEN: '/api/auth/jwt/refresh?source=extension',
         PARSE_EMAILS_FROM_SPREADSHEET: '/api/googlesheet/parse',
-        LOGIN: '/api/auth/google/login',
+        LOGIN: '/api/auth/google/login?source=extension&lang=en',
         START_CAMPAIGN: '/api/campaign/start',
         CHECK_SUBSCRIPTION: '/api/subscription/current'
     },
@@ -13,10 +13,10 @@ export const API_CONF = {
 export const GMAIL_SELECTORS = {
     COMPOSE_WINDOW_BUTTON: '.T-I.T-I-KE.L3',
     SEND_BUTTON: '.T-I.J-J5-Ji.aoO.v7.T-I-atl.L3',
-    COMPOSE_WINDOW: '.aSt,.AD',
+    COMPOSE_WINDOW: '.AD',
     RECIPIENT_FIELD: '.agP.aFw',
     ATTACHMENT_NODES: 'dL',
-    RECIPIENTS_NODES: '.afV',
+    RECIPIENTS_NODES: '.afV[data-hovercard-id]',
 } as const
 
 export const TIMEZONES = [

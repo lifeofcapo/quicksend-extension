@@ -1,6 +1,6 @@
 import { API_CONF } from "~src/utils/constants"
 import { storageService } from "~src/services/storage"
-import type { EmailData, SubscriptionData } from "~src/types"
+import type { CampaignData, SubscriptionData } from "~src/types"
 
 class AuthManager {
     private baseUrl = API_CONF.API_URL
@@ -171,17 +171,8 @@ class AuthManager {
     }
 
     async startCampaign(
-        emailData: EmailData,
-        files: Array<{ blob: Blob; filename: string }>
+        campaignData: CampaignData
     ): Promise<string> {
-        const formData = new FormData()
-
-        for (const file of files) {
-            formData.append("files", file.blob, file.filename)
-        }
-
-        formData.append("body", JSON.stringify(emailData))
-
         const accessToken = await this.storageService.getAccessToken()
 
         let response = await fetch(this.baseUrl + API_CONF.API_ENDPOINTS.START_CAMPAIGN, {
@@ -189,7 +180,7 @@ class AuthManager {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
             },
-            body: formData
+            body: JSON.stringify(campaignData)
         })
 
         if (response.status === 401) {
@@ -200,7 +191,7 @@ class AuthManager {
                 headers: {
                     'Authorization': `Bearer ${newAccessToken}`,
                 },
-                body: formData
+                body: JSON.stringify(campaignData)
             })
         }
 
@@ -213,10 +204,17 @@ class AuthManager {
 
     async fetchAttachment(attachmentUrl: string): Promise<Blob> {
         const response = await fetch(attachmentUrl, {
+            method: 'GET',
             credentials: 'include',
+            headers: {
+                'Origin': 'chrome-extension://' + chrome.runtime.id
+            },
+            mode: 'cors'
         })
 
         if (!response.ok) {
+            console.log("Failed to fetch attachment")
+
             throw new Error("Failed to fetch attachment")
         }
 
@@ -243,17 +241,36 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.type === 'START_CAMPAIGN') {
-        authManager.startCampaign(message.emailData, message.files)
+        authManager.startCampaign(message.campaignData)
             .then(data => sendResponse({ success: true, data }))
             .catch(error => sendResponse({ success: false, error: error.message }))
         return true
     }
 
     if (message.type === 'FETCH_ATTACHMENT') {
-        authManager.fetchAttachment(message.attachmentUrl)
-            .then(data => sendResponse({ success: true, data }))
-            .catch(error => sendResponse({ success: false, error: error.message }))
-        return true
+        (async() => {
+            try {
+                const blob = await authManager.fetchAttachment(message.attachmentUrl)
+
+                const reader = new FileReader()
+
+                reader.onloadend = async () => {
+                    const base64data = reader.result?.toString().split(',')[1];
+
+                    sendResponse({ success: true, data: base64data, mimetype: blob.type })
+                }
+
+                reader.onerror = (e) => {
+                    sendResponse({ success: false, error: e })
+                }
+
+                reader.readAsDataURL(blob)
+            } catch (error) {
+                sendResponse({ success: false, error: error.message })
+            }
+        })();
+
+        return true;
     }
 
     if (message.type === 'CHECK_SUBSCRIPTION') {

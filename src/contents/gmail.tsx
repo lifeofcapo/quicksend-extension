@@ -9,10 +9,17 @@ import { findParentComposeWindow } from "~src/utils/helpers"
 import { CampaignDropdown } from "~src/components/CampaignDropdown"
 import { subscribe } from "~src/contents/message-bus"
 import { toast } from "sonner";
+import type { AttachmentDataToParse, EmailData, AttachmentDataParsed, CampaignData } from "~src/types";
 
 export const config: PlasmoCSConfig = {
     matches: ["https://mail.google.com/*"],
     all_frames: true,
+}
+
+async function saveCampaignTime(v: boolean): Promise<void> {
+    if (!v) {
+
+    }
 }
 
 export const getInlineAnchorList: PlasmoGetInlineAnchorList = async () => { 
@@ -99,23 +106,37 @@ export default function QuickSendInline() {
             return
         }
 
-        const emailData = await gmailService.getEmailDataFromGmailMessagesWindow(composeWindow)
-        const attachments = await gmailService.getFilesFromGmailMessageWindow(composeWindow)
+        const emailData: EmailData = await gmailService.getEmailDataFromGmailMessagesWindow(composeWindow)
+        const attachments: AttachmentDataToParse[] = await gmailService.getFilesFromGmailMessageWindow(composeWindow)
 
-        const files = await Promise.all(
-            attachments.map(async (attachment) => ({
-                blob: await chrome.runtime.sendMessage({
+        const files: AttachmentDataParsed[] = await Promise.all(
+            attachments.map(async (attachment) => {
+                const response = await chrome.runtime.sendMessage({
                     type: 'FETCH_ATTACHMENT',
                     attachmentUrl: attachment.url,
-                }),
-                filename: attachment.filename,
-            }))
+                });
+
+                if (!response.success) {
+                    throw new Error(`Failed to fetch attachment: ${response.error}`);
+                }
+
+                return {
+                    filename: attachment.filename,
+                    content: response.data,
+                    mimetype: response.mimeType || 'application/octet-stream',
+                    size: response.size || 0
+                };
+            })
         )
+
+        const campaignData: CampaignData = {
+            ...emailData,
+            files
+        }
 
         const response = await chrome.runtime.sendMessage({
             type: 'START_CAMPAIGN',
-            emailData: emailData,
-            files: files,
+            campaignData: campaignData,
         })
 
         if (!response.success) {

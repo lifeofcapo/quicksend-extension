@@ -2,11 +2,24 @@ import React, { useState } from "react"
 import { Calendar, Clock, Globe } from "lucide-react"
 
 import { TIMEZONES } from "~src/utils/constants"
-import type { CampaignDropdownProps } from "~src/types"
+import { storageService } from "~src/services/storage"
+import { getComposeId } from "~src/utils/helpers"
+import type { CampaignDropdownProps, TimeSettings } from "~src/types"
 
 export const CampaignDropdown = ({ isVisible }: CampaignDropdownProps) => {
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-    const [selectedTimezone, setSelectedTimezone] = useState(userTimezone)
+
+    const [values, setValues] = useState<TimeSettings>(() => {
+        const composeWindowId = async () => await getComposeId()
+
+        const savedTimeSettings = async () => await storageService.getTimeSettings(composeWindowId)
+
+        return savedTimeSettings ?? {
+            date: '',
+            time: '',
+            timezone: userTimezone
+        }
+    })
 
     if (!isVisible) return null
 
@@ -59,7 +72,6 @@ export const CampaignDropdown = ({ isVisible }: CampaignDropdownProps) => {
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {/* Date */}
                 <div>
                     <label
                         htmlFor="campaign-date"
@@ -90,6 +102,7 @@ export const CampaignDropdown = ({ isVisible }: CampaignDropdownProps) => {
                             transition: 'all 0.2s',
                             boxSizing: 'border-box'
                         }}
+                        onChange={(e) => setValues(prev => ({...prev, date: e.target.value}))}
                         onFocus={(e) => {
                             e.target.style.borderColor = '#2563EB'
                             e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'
@@ -131,6 +144,7 @@ export const CampaignDropdown = ({ isVisible }: CampaignDropdownProps) => {
                             transition: 'all 0.2s',
                             boxSizing: 'border-box'
                         }}
+                        onChange={(e) => setValues(prev => ({...prev, time: e.target.value}))}
                         onFocus={(e) => {
                             e.target.style.borderColor = '#2563EB'
                             e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'
@@ -161,8 +175,8 @@ export const CampaignDropdown = ({ isVisible }: CampaignDropdownProps) => {
                     <select
                         id="campaign-timezone"
                         name="campaign-timezone"
-                        value={selectedTimezone}
-                        onChange={(e) => setSelectedTimezone(e.target.value)}
+                        value={values.timezone}
+                        onChange={(e) => setValues(prev => ({...prev, timezone: e.target.value}))}
                         style={{
                             width: '100%',
                             padding: '10px 12px',
@@ -204,7 +218,7 @@ export const CampaignDropdown = ({ isVisible }: CampaignDropdownProps) => {
                         marginTop: '6px'
                     }}>
                         Current time: {new Date().toLocaleTimeString('en-US', {
-                        timeZone: selectedTimezone,
+                        timeZone: values.timezone,
                         hour: '2-digit',
                         minute: '2-digit'
                     })}

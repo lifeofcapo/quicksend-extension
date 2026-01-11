@@ -23,3 +23,12 @@ export async function findParentComposeWindow(element: HTMLElement): Promise<HTM
 export async function generateShortId(): Promise<string> {
     return Math.random().toString(36).substring(2, 10);
 }
+
+export async function getComposeId(): Promise<string> {
+    const url = window.location.href;
+
+    const composeMatch = url.match(/compose=([^&]+)/);
+    const composeId = composeMatch ? composeMatch[1] : null;
+
+    return composeId;
+}

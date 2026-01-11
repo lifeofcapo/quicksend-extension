@@ -1,30 +1,16 @@
 import { GMAIL_SELECTORS } from "~src/utils/constants"
-import type { AttachmentData, EmailData } from "~src/types";
+import type { AttachmentDataToParse, EmailData } from "~src/types";
 import { storageService } from "~src/services/storage"
 
 class GmailService {
     async getFilesFromGmailMessageWindow(
         composeWindow: HTMLElement,
-    ): Promise<AttachmentData[]> {
-        const fullSizeWindowParent = document.querySelector("div.aSs") as HTMLElement
-
-        if (fullSizeWindowParent) {
-            const style = getComputedStyle(fullSizeWindowParent!).getPropertyValue("visibility: hidden")
-
-            if (!style) {
-                const fullSizeWindow = document.querySelector("div")
-
-                if (fullSizeWindow) {
-                    composeWindow = fullSizeWindow as HTMLElement
-                }
-            }
-        }
-
-        const hrefs: AttachmentData[] = []
-        const attachmentNodes = composeWindow.getElementsByClassName(GMAIL_SELECTORS.ATTACHMENT_NODES);
+    ): Promise<AttachmentDataToParse[]> {
+        const hrefs: AttachmentDataToParse[] = []
+        const attachmentNodes = composeWindow.querySelectorAll(GMAIL_SELECTORS.ATTACHMENT_NODES);
 
         for (const node of attachmentNodes) {
-            const attachmentInput = node.querySelector("input[name='attachment']");
+            const attachmentInput = node.querySelector("input[name='attach']");
 
             if (attachmentInput) {
                 const link = node.querySelector("a") as HTMLAnchorElement;
@@ -45,37 +31,29 @@ class GmailService {
     async getEmailDataFromGmailMessagesWindow(
         composeWindow: HTMLElement,
     ): Promise<EmailData> {
-        let workingWindow = composeWindow
-
-        const fullSizeWindowParent = document.querySelector("div.aSs") as HTMLElement
-        if (fullSizeWindowParent) {
-            const style = getComputedStyle(fullSizeWindowParent!).getPropertyValue("visibility: hidden")
-
-            if (!style) {
-                const fullSizeWindow = document.querySelector("div")
-
-                if (fullSizeWindow) {
-                    workingWindow = fullSizeWindow as HTMLElement
-                }
-            }
-        }
-
-        const emailData: EmailData = {
+        const emailData = {
             recipients: [],
-            subject: "",
-            body: "",
-            date: "",
-            time: "",
-            timezone: ""
+            subject: null,
+            body: null,
+            date: null,
+            time: null,
+            timezone: null
         }
 
-        const recipientNodes = workingWindow.querySelectorAll(
-            'div[role="option"][data-hovercard-id]'
-        )
+        const recipientsNodes = composeWindow.querySelectorAll(
+            '.afV[data-hovercard-id], div[peoplekit-id][data-hovercard-id]'
+        );
 
-        emailData.recipients = Array.from(recipientNodes)
-            .map((node) => node.getAttribute("data-hovercard-id") || "")
-            .filter(email => email.includes('@'))
+        if (emailData.recipients.length === 0 && recipientsNodes.length > 0) {
+            emailData.recipients = Array.from(recipientsNodes)
+                .map(node => node.getAttribute("data-hovercard-id"))
+                .filter(email =>
+                    email &&
+                    email.includes('@') &&
+                    email.includes('.') &&
+                    email !== "undefined"
+                ) as string[];
+        }
 
         for (const [index, rep] of emailData.recipients.entries()) {
             if (
@@ -96,41 +74,29 @@ class GmailService {
             }
         }
 
-        const subjectField = workingWindow.querySelector(
+        const subjectField = composeWindow.querySelector(
             'input[name="subject"]'
         ) as HTMLInputElement
-        emailData.subject = subjectField?.value || ""
+        emailData.subject = subjectField.value
 
-        const messageBody = workingWindow.querySelector(
+        const messageBody = composeWindow.querySelector(
             'div[role="textbox"][contenteditable="true"]'
         ) as HTMLInputElement
-        emailData.body = messageBody?.innerHTML || ""
+        emailData.body = messageBody.innerHTML
 
-        const date = workingWindow.querySelector(
+        const date = document.querySelector(
             "#campaign-date"
-        ) as HTMLInputElement;
-        const time = workingWindow.querySelector(
+        ) as HTMLInputElement
+        const time = document.querySelector(
             "#campaign-time"
-        ) as HTMLInputElement;
-        const timezone = workingWindow.querySelector(
+        ) as HTMLInputElement
+        const timezone = document.querySelector(
             "#campaign-timezone"
-        ) as HTMLInputElement;
+        ) as HTMLInputElement
 
-        const now = new Date();
-
-        if (date && time) {
-            const inputDateTime = new Date(`${date.value}T${time.value}`)
-
-            if (inputDateTime < now) {
-                emailData.date = ""
-                emailData.time = ""
-                emailData.timezone = ""
-            } else {
-                emailData.date = date.value
-                emailData.time = time.value
-                emailData.timezone = timezone.value
-            }
-        }
+        emailData.date = date.value
+        emailData.time = time.value
+        emailData.timezone = timezone.value
 
         return emailData
     }

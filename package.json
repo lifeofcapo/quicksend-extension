@@ -34,7 +34,9 @@
     "host_permissions": [
       "*://mail.google.com/*",
       "http://localhost/*",
-      "https://*.chromiumapp.org/*"
+      "https://*.chromiumapp.org/*",
+      "https://mail.google.com/*",
+      "https://mail-attachment.googleusercontent.com/*"
     ],
     "permissions": [
       "identity",

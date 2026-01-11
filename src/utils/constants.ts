@@ -15,7 +15,7 @@ export const GMAIL_SELECTORS = {
     SEND_BUTTON: '.T-I.J-J5-Ji.aoO.v7.T-I-atl.L3',
     COMPOSE_WINDOW: '.AD',
     RECIPIENT_FIELD: '.agP.aFw',
-    ATTACHMENT_NODES: 'dL',
+    ATTACHMENT_NODES: '.dL',
     RECIPIENTS_NODES: '.afV[data-hovercard-id]',
 } as const
 

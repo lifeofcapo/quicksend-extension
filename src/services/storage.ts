@@ -1,5 +1,5 @@
 import { SecureStorage } from "@plasmohq/storage/secure"
-import type { ParsedEmails } from "~src/types"
+import type {ParsedEmails, TimeSettings} from "~src/types"
 
 class SecureStorageService {
     private storage = new SecureStorage()
@@ -16,6 +16,16 @@ class SecureStorageService {
         await this.init()
 
         await this.storage.set('parsed_emails', parsedEmails);
+    }
+
+    async setTimeSettings(composeWindowId: string, timeSettings: TimeSettings): Promise<void> {
+        await this.init()
+
+        await this.storage.set(`time_setting_${composeWindowId}`, timeSettings)
+    }
+
+    async getTimeSettings(composeWindowId: string): Promise<TimeSettings | null> {
+        return await this.storage.get(`time_setting_${composeWindowId}`)
     }
 
     async getParsedEmailsById(id: string): Promise<ParsedEmails | null> {

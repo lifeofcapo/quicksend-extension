@@ -32,7 +32,7 @@ class AuthManager {
                         return
                     }
 
-                    console.log('[🔵 Quicksend] Got edirect URL:', redirectUrl)
+                    console.log('[🔵 Quicksend] Got redirect URL:', redirectUrl)
 
                     try {
                         const url = new URL(redirectUrl)
@@ -179,6 +179,7 @@ class AuthManager {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify(campaignData)
         })
@@ -190,6 +191,7 @@ class AuthManager {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${newAccessToken}`,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(campaignData)
             })
@@ -296,11 +298,13 @@ chrome.webNavigation.onCompleted.addListener(
             try {
                 await authManager.login(true)
 
-                chrome.tabs.sendMessage(details.tabId, {
-                    type: 'AUTH_SUCCESS',
-                }).catch(() => {
-                    console.log('[🔵 Quicksend] Content script not ready yet')
-                })
+                setTimeout(() => {
+                    chrome.tabs.sendMessage(details.tabId, {
+                        type: 'AUTH_SUCCESS',
+                    }).catch((err) => {
+                        console.log('[🔵 Quicksend] Content script not ready:', err)
+                    })
+                }, 2000)
             } catch (error) {
                 console.error('[🔵 Quicksend] Login failed:', error.error)
             }

@@ -1,6 +1,7 @@
 import { GMAIL_SELECTORS } from "~src/utils/constants"
 import type { AttachmentDataToParse, EmailData } from "~src/types";
 import { storageService } from "~src/services/storage"
+import { getComposeId } from "~src/utils/helpers";
 
 class GmailService {
     async getFilesFromGmailMessageWindow(
@@ -84,19 +85,26 @@ class GmailService {
         ) as HTMLInputElement
         emailData.body = messageBody.innerHTML
 
-        const date = document.querySelector(
-            "#campaign-date"
-        ) as HTMLInputElement
-        const time = document.querySelector(
-            "#campaign-time"
-        ) as HTMLInputElement
-        const timezone = document.querySelector(
-            "#campaign-timezone"
-        ) as HTMLInputElement
+        const composeWindowId = await getComposeId()
+        const timeSettings = await storageService.getTimeSettings(composeWindowId)
 
-        emailData.date = date.value
-        emailData.time = time.value
-        emailData.timezone = timezone.value
+        if (!timeSettings) {
+            emailData.date = (document.querySelector(
+                "#campaign-date"
+            ) as HTMLInputElement).value
+            emailData.time = (document.querySelector(
+                "#campaign-time"
+            ) as HTMLInputElement).value
+            emailData.timezone = (document.querySelector(
+                "#campaign-timezone"
+            ) as HTMLInputElement).value
+        } else {
+            emailData.date = timeSettings.date
+            emailData.time = timeSettings.time
+            emailData.timezone = timeSettings.timezone
+        }
+
+        console.log(`Email data: ${emailData}`)
 
         return emailData
     }

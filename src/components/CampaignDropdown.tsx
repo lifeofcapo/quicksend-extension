@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Calendar, Clock, Globe } from "lucide-react"
 
 import { TIMEZONES } from "~src/utils/constants"
@@ -9,17 +9,47 @@ import type { CampaignDropdownProps, TimeSettings } from "~src/types"
 export const CampaignDropdown = ({ isVisible }: CampaignDropdownProps) => {
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
-    const [values, setValues] = useState<TimeSettings>(() => {
-        const composeWindowId = async () => await getComposeId()
-
-        const savedTimeSettings = async () => await storageService.getTimeSettings(composeWindowId)
-
-        return savedTimeSettings ?? {
-            date: '',
-            time: '',
-            timezone: userTimezone
-        }
+    const [values, setValues] = useState<TimeSettings>({
+        date: '',
+        time: '',
+        timezone: userTimezone,
     })
+    const [loading, setLoading] = useState<boolean>(true)
+
+    useEffect(() => {
+        const loadInitValues = async () => {
+            try {
+                const composeWindowId = await getComposeId()
+                const savedTimeSettings = await storageService.getTimeSettings(composeWindowId)
+
+                if (savedTimeSettings) {
+                    setValues(savedTimeSettings)
+                }
+            } catch (e) {
+                console.error(`🔵 Quicksend: Failed to load time settings: ${e}`)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        loadInitValues()
+    }, [])
+
+    useEffect(() => {
+        if (loading) return
+
+        const saveTimeSettings = async () => {
+            try {
+                const composeWindowId = await getComposeId()
+
+                await storageService.setTimeSettings(composeWindowId, values)
+            } catch (e) {
+                console.error(`🔵 Quicksend: Failed to save time settings: ${e}`)
+            }
+        }
+
+        saveTimeSettings()
+    }, [values, loading]);
 
     if (!isVisible) return null
 

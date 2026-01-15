@@ -15,19 +15,20 @@ export const config: PlasmoCSConfig = {
 }
 
 export const getInlineAnchor: PlasmoGetInlineAnchor = async () => {
-    const MAX_RETRIES = 50
-    let retries = 0
-
     return new Promise<Element>((resolve, reject) => {
-        const checkElement = () => {
-            const elements = document.getElementsByClassName("zo")
+        const timeout = setTimeout(() => {
+          reject(new Error("Anchor element not found"))
+        }, 10000)
 
-            if (elements.length > 0) {
-                resolve(elements[0])
-            } else if (retries >= MAX_RETRIES) {
-                reject(new Error("Anchor element not found"))
+        const checkElement = () => {
+            const anchor = document.querySelector(".zo") ||
+              document.querySelector('[role="toolbar"]') ||
+              document.querySelector('.btC')
+
+            if (anchor) {
+              clearTimeout(timeout)
+              resolve(anchor as Element)
             } else {
-                retries++
                 setTimeout(checkElement, 100)
             }
         }

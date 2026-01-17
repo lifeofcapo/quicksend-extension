@@ -30,7 +30,7 @@
   "manifest": {
     "name": "Quicksend",
     "version": "1.0",
-    "description": "QuickSend - это современный сервис для массовой отправки электронных писем внутри Gmail. Мы гарантируем простое в использовании приложение, которое оптимизирует вашу рассылку, минимизируя число писем в спаме.",
+    "description": "QuickSend - Mass Email Service inside Gmail",
     "host_permissions": [
       "*://mail.google.com/*",
       "http://localhost/*",
